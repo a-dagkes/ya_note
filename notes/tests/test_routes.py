@@ -25,6 +25,9 @@ class TestRoutes(TestCase):
         )
 
     def test_common_pages_availability(self):
+        """Анонимному пользователю доступны: главная страница, страницы
+        регистрации пользователей, входа в учётную запись и выхода из нее.
+        """
         urls = (
             ('notes:home', None),
             ('users:login', None),
@@ -39,6 +42,11 @@ class TestRoutes(TestCase):
                 self.assertEqual(response.status_code, status)
 
     def test_pages_availability_for_author(self):
+        """Автору заметки доступны страница просмотра заметки,
+        страницы ее редактирования и удаления. Авторизованному пользователю
+        не доступны страницы просмотра, редактирования и удаления
+        чужих заметок.
+        """
         users_statuses = (
             (self.author, HTTPStatus.OK),
             (self.random_person, HTTPStatus.NOT_FOUND),
@@ -57,6 +65,10 @@ class TestRoutes(TestCase):
                     self.assertEqual(response.status_code, status)
 
     def test_pages_availability_for_auth_user(self):
+        """Авторизованному пользователю доступны страница со списком
+        всех своих заметок, страница добавления новой заметки и страница
+        успешного добавления заметки.
+        """
         user = self.random_person
         self.client.force_login(user)
         urls = (
@@ -72,6 +84,11 @@ class TestRoutes(TestCase):
                 self.assertEqual(response.status_code, status)
 
     def test_redirect_for_anonymous_client(self):
+        """Анонимному пользователю не доступны страницы списка заметок,
+        детального просмотра, добавления, редактирования и удаления заметки,
+        а также страница успешного добавления заметки.
+        При попытке доступа к ним, он перенаправляется на страницу авторизации.
+        """
         login_url = reverse('users:login')
         urls = (
             ('notes:add', None),

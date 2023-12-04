@@ -14,22 +14,36 @@ class TestListPage(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.author = User.objects.create(username='Notes Author')
-        Note.objects.bulk_create(
-            Note(
-                title='Title',
-                text='Text',
-                slug=f'title{index}',
-                author=cls.author,
-            )
-            for index in range(3)
+        cls.note = Note.objects.create(
+            title='Title',
+            text='Text',
+            slug='title',
+            author=cls.author,
         )
+        cls.another_user = User.objects.create(username='Random User')
 
-    def test_list_obj(self):
+
+    def test_note_in_list_for_another_user(self):
+        """Авторизованному пользователю не доступны заметки
+        другого пользователя.
+        """
+        self.client.force_login(self.another_user)
+        response = self.client.get(reverse('notes:list'))
+        object_list = response.context['object_list']
+        notes_count = len(object_list)
+        self.assertEqual(notes_count, 0)
+        self.assertNotIn(self.note, object_list)
+
+
+    def test_note_list_for_author(self):
+        """Автору доступны все его заметки."""
         self.client.force_login(self.author)
         response = self.client.get(reverse('notes:list'))
         object_list = response.context['object_list']
         notes_count = len(object_list)
-        self.assertEqual(notes_count, 3)
+        self.assertEqual(notes_count, 1)
+        self.assertIn(self.note, object_list)
+
 
 class TestNotePage(TestCase):
 
@@ -44,6 +58,7 @@ class TestNotePage(TestCase):
         )
 
     def test_authorized_client_form_pages(self):
+        """Авторизованному пользователю доступна форма для отправки заметки."""
         self.client.force_login(self.author)
         urls = (
             ('notes:add', None),
@@ -56,6 +71,9 @@ class TestNotePage(TestCase):
                 self.assertIn('form', response.context)
 
     def test_authorized_client_no_form_pages(self):
+        """Форма для отправки заметки отсутствует на страницах
+        детального просмотра и удаления заметки.
+        """
         self.client.force_login(self.author)
         urls = (
             ('notes:detail', (self.note.slug,)),
@@ -68,6 +86,10 @@ class TestNotePage(TestCase):
                 self.assertNotIn('form', response.context)
 
     def test_authorized_client_data_pages(self):
+        """Отдельная заметка передается на страницу детального просмотра,
+        редактирования и удаления заметки в списке объектов object_list
+        в словаре context.
+        """
         self.client.force_login(self.author)
         urls = (
             ('notes:edit', (self.note.slug,)),
