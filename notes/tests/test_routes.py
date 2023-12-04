@@ -1,4 +1,3 @@
-"""Docstring."""
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
@@ -14,7 +13,7 @@ User = get_user_model()
 class TestRoutes(TestCase):
 
     @classmethod
-    def setUpTestData(cls) -> None:
+    def setUpTestData(cls):
         cls.random_person = User.objects.create(username='Random Person')
         cls.author = User.objects.create(username='Notes Author')
         cls.note = Note.objects.create(
@@ -34,12 +33,11 @@ class TestRoutes(TestCase):
             ('users:logout', None),
             ('users:signup', None),
         )
-        status = HTTPStatus.OK
         for name, args in urls:
             with self.subTest(name=name):
                 url = reverse(name, args=args)
                 response = self.client.get(url)
-                self.assertEqual(response.status_code, status)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_availability_for_author(self):
         """Автору заметки доступны страница просмотра заметки,
@@ -76,12 +74,11 @@ class TestRoutes(TestCase):
             ('notes:list', None),
             ('notes:success', None),
         )
-        status = HTTPStatus.OK
         for name, args in urls:
             with self.subTest(user=user, name=name):
                 url = reverse(name, args=args)
                 response = self.client.get(url)
-                self.assertEqual(response.status_code, status)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_redirect_for_anonymous_client(self):
         """Анонимному пользователю не доступны страницы списка заметок,
